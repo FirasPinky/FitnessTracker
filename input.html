@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Run Tracker - Input</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f3f4f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+            background-color: white;
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1em;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0 0 20px 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 34px;
+        }
+        .map {
+            flex: 1;
+            margin: 10px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #eee;
+            height: 1000px; /* Adjust this value as needed */
+            max-height: 50vh; /* Limit the height to a percentage of the viewport height */
+        }
+        .content {
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        .content p {
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .buttons #start-btn {
+            background-color: #ea9555c0;
+            color: #fff;
+        }
+        .buttons #start-btn:hover {
+            background-color: #ffc99fc0;
+        }
+        .buttons #stop-btn {
+            background-color: #936d5f;
+            color: #fff;
+        }
+        .buttons #stop-btn:hover {
+            background-color: #52291b;
+        }
+        .footer-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f8f8f8;
+            border-top: 1px solid #ddd;
+            padding: 5px;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            font-family: "Garamond", Raleway, sans-serif;
+        }
+        .footer-nav a {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            color: #333;
+            transition: color 0.3s, background-color 0.3s;
+        }
+        .footer-nav a.active {
+            color: #ea9555c0;
+        }
+        .footer-nav a:hover {
+            color: #ea9555c0;
+            background-color: #e8f0fe;
+        }
+        .footer-nav a i {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 20px;
+            
+        }
+
+        .bold-text {
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            .buttons button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+            .footer-nav a i {
+                font-size: 16px;
+            }
+            .map {
+                height: 1000px; /* Smaller height for mobile devices */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Run Log</h1>
+    </div>
+    <div id="map" class="map"></div>
+    <div class="content">
+        <p>From: <span id="start-location" class="bold-text">The Current Location</span></p>
+        <div class="buttons">
+            <button id="start-btn">Start</button>
+            <button id="stop-btn" disabled>Stop</button>
+        </div>
+    </div>
+    <div class="footer-nav">
+        <a href="homepage.html"><i class="fas fa-home"></i>Home</a>
+        <a href="Myexercise.html"><i class="fas fa-dumbbell"></i>Exercise</a>
+        <a href="FoodPage.jsp"><i class="fas fa-fire"></i>Calories</a>
+        <a href="input.html" class="active"><i class="fas fa-running"></i>Run</a>
+    </div>
+
+    <script>
+        let map, startMarker, currentPosition, path = [], watchId, startTime, timer;
+        const startLocationElement = document.getElementById('start-location');
+        const startButton = document.getElementById('start-btn');
+        const stopButton = document.getElementById('stop-btn');
+
+        const geocodeLatLng = (lat, lng, callback) => {
+            const geocoder = new google.maps.Geocoder();
+            const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            geocoder.geocode({ location: latlng }, (results, status) => {
+                if (status === 'OK') {
+                    if (results[0]) {
+                        callback(results[0].formatted_address);
+                    } else {
+                        callback('No results found');
+                    }
+                } else {
+                    callback('Geocoder failed due to: ' + status);
+                }
+            });
+        };
+
+        const saveDataAndRedirect = () => {
+            sessionStorage.setItem('startLocation', JSON.stringify(currentPosition));
+            sessionStorage.setItem('path', JSON.stringify(path));
+            sessionStorage.setItem('timeElapsed', (new Date() - startTime));  // Save elapsed time in milliseconds
+            clearInterval(timer);
+            window.location.href = 'output.html';
+        };
+
+        const startRun = () => {
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            startTime = new Date();
+            timer = setInterval(updateTime, 1000);  // Update the timer every second
+
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(position => {
+                    currentPosition = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    path.push(currentPosition);
+                    map.setCenter(currentPosition);
+                    if (!startMarker) {
+                        startMarker = new google.maps.Marker({
+                            position: currentPosition,
+                            map: map,
+                            label: "Start"
+                        });
+                        geocodeLatLng(startMarker.position.lat(), startMarker.position.lng(), (address) => {
+                            startLocationElement.innerText = address;
+                        });
+                    }
+                });
+            }
+        };
+
+        const stopRun = () => {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            if (navigator.geolocation) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            saveDataAndRedirect();
+        };
+
+        const updateTime = () => {
+            const now = new Date();
+            const elapsed = new Date(now - startTime);
+            const minutes = String(elapsed.getMinutes()).padStart(2, '0');
+            const seconds = String(elapsed.getSeconds()).padStart(2, '0');
+            console.log(`${minutes}:${seconds}`);
+        };
+
+        const initMap = () => {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: -34.397, lng: 150.644 },
+                zoom: 16
+            });
+        };
+
+        startButton.addEventListener('click', startRun);
+        stopButton.addEventListener('click', stopRun);
+
+        window.onload = initMap;
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBaYpQAp09R9gFPcyNoPtGwt060jvgcg3M&libraries=places&callback=initMap" async defer></script>
+</body>
+</html>

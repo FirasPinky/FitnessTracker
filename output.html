@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Run Tracker - Output</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #fff;
+        }
+
+        .header {
+            font-size: 18px;
+            background-color: #eeb284c0;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1em;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0 0 20px 20px;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background-color: #eeb284c0;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stats {
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stats .main-stat {
+            font-size: 60px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #eeb284c0;
+        }
+
+        .stats .sub-stat {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        .stat-group {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .stat-item .label {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .map-container #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        #stop-location {
+            margin-top: 50px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .stats .main-stat {
+                font-size: 48px;
+            }
+            .stat-item .value {
+                font-size: 20px;
+            }
+            .stat-item .label {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stats .main-stat {
+                font-size: 48px;
+            }
+            .stat-item .value {
+                font-size: 20px;
+            }
+            .stat-item .label {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header">
+            Run Log
+            <button class="close-button" onclick="redirectToHome()">x</button>
+        </div>
+    </header>
+    <div class="stats">
+        <div class="main-stat" id="distance">0.00</div>
+        <div class="sub-stat">Kilometres</div>
+        <div class="stat-group">
+            <div class="stat-item">
+                <div class="value" id="time">00:00</div>
+                <div class="label">Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="value" id="calories">0</div>
+                <div class="label">Calories</div>
+            </div>
+        </div>
+        <div class="sub-stat" id="stop-location"></div>
+    </div>
+    <div class="map-container">
+        <div id="map" class="map"></div>
+    </div>
+
+    <script>
+        function redirectToHome() {
+            window.location.href = 'homepage.html'; // Change 'index.html' to your homepage URL
+        }
+
+        let map, path, distance = 0, currentPosition;
+        const distanceElement = document.getElementById('distance');
+        const timeElement = document.getElementById('time');
+        const caloriesElement = document.getElementById('calories');
+        const stopLocationElement = document.getElementById('stop-location');
+
+        const geocodeLatLng = (lat, lng, callback) => {
+            const geocoder = new google.maps.Geocoder();
+            const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+            geocoder.geocode({ location: latlng }, (results, status) => {
+                if (status === 'OK') {
+                    if (results[0]) {
+                        callback(results[0].formatted_address);
+                    } else {
+                        callback('No results found');
+                    }
+                } else {
+                    console.error('Geocoder failed due to: ' + status);
+                    callback('Geocoder failed');
+                }
+            });
+        };
+
+        const initMap = () => {
+            path = JSON.parse(sessionStorage.getItem('path'));
+            const startLocation = JSON.parse(sessionStorage.getItem('startLocation'));
+            const timeElapsed = parseInt(sessionStorage.getItem('timeElapsed'), 10);
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: startLocation,
+                zoom: 16
+            });
+
+            const routePath = new google.maps.Polyline({
+                strokeColor: "#FF0000",
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: map,
+                path: path
+            });
+
+            const startMarker = new google.maps.Marker({
+                position: startLocation,
+                map: map,
+                label: "Start"
+            });
+
+            currentPosition = startLocation;
+            path.forEach(pos => {
+                const p1 = new google.maps.LatLng(currentPosition.lat, currentPosition.lng);
+                const p2 = new google.maps.LatLng(pos.lat, pos.lng);
+                distance += google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000;
+                currentPosition = pos;
+            });
+
+            distanceElement.innerText = distance.toFixed(2);
+            caloriesElement.innerText = (distance * 60).toFixed(0);
+
+            geocodeLatLng(currentPosition.lat, currentPosition.lng, (address) => {
+                stopLocationElement.innerText = address;
+                new google.maps.Marker({
+                    position: currentPosition,
+                    map: map,
+                    label: "Stop"
+                });
+            });
+
+            const elapsed = new Date(timeElapsed);
+            const minutes = String(elapsed.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsed.getUTCSeconds()).padStart(2, '0');
+            timeElement.innerText = `${minutes}:${seconds}`;
+        };
+
+        window.onload = initMap;
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBaYpQAp09R9gFPcyNoPtGwt060jvgcg3M&libraries=geometry,places&callback=initMap" async defer></script>
+</body>
+</html>

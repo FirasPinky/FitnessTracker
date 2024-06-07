@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Fitness Tracker</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <style>
+            /* Your CSS styles here */
+            body {
+                font-family: "Garamond", Raleway, sans-serif;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                background-color: #f3f4f6;
+                color: #333;
+                padding-bottom: 60px; /* Ensure space for the fixed navbar */
+            }
+            header {
+                background-color: white;
+                color: #000000;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1em;
+            }
+
+            .avatar {
+                vertical-align: middle;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                margin-right: 50px;
+            }
+
+            .dropdownAvatar {
+                position: relative;
+                display: inline-block;
+            }
+
+            .avatarDropdown {
+                display: none;
+                position: absolute;
+                right: 0;
+                background-color: white;
+                min-width: 100px;
+                box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+                z-index: 1;
+            }
+
+            .avatarDropdown a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+            }
+
+            .avatarDropdown a:hover {
+                background-color: #ddd;
+            }
+
+            .dropdownAvatar:hover .avatarDropdown {
+                display: block;
+            }
+
+            .title {
+                flex-grow: 1;
+                text-align: center;
+                margin: 0;
+                font-size: 14px;
+                padding-right: 60px;
+            }
+            .container {
+                width: 100%;
+                max-width: 480px;
+                margin: 0 auto;
+                background-color: #fff;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .search-bar {
+                display: flex;
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+                align-items: center;
+                background-color: #f8f8f8;
+                position: relative;
+            }
+            .search-bar .close-btn {
+                font-size: 24px;
+                cursor: pointer;
+                color: #333;
+            }
+            .search-bar input {
+                flex-grow: 1;
+                padding: 10px;
+                margin-left: 15px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+                font-family: "Garamond", Raleway, sans-serif;
+            }
+            .search-bar .done-btn {
+                position: absolute;
+                right: 15px;
+                top: 15px;
+                font-size: 24px;
+                cursor: pointer;
+                color: #333;
+            }
+          
+            .tabs {
+                display: flex;
+                border-bottom: 1px solid #ddd;
+                background-color: #f8f8f8;
+            }
+            .tabs a.button-like {
+                flex: 1;
+                padding: 10px;
+                border: none;
+                background: none;
+                cursor: pointer;
+                font-size: 16px;
+                text-align: center;
+                text-decoration: none;
+                color: #ea9555c0;
+                transition: color 0.3s, border-bottom 0.3s;
+            }
+            .tabs a.button-like.active {
+                font-weight: bold;
+                border-bottom: 3px solid #ea9555c0;
+                color: #ea9555c0;
+            }
+            .tabs a.button-like:hover {
+                color:#ea9555c0;
+            }
+            .exercise-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .exercise-list li {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 15px;
+                border-bottom: 1px solid #ddd;
+                transition: background-color 0.3s;
+                cursor: pointer;
+            }
+            .exercise-list li:hover {
+                background-color: #f8f8f8;
+            }
+            .exercise-list li:last-child {
+                border-bottom: none;
+            }
+            .exercise-list li .delete-btn {
+                background-color: #ff4d4d;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            .exercise-list li .delete-btn:hover {
+                background-color: #cc0000;
+            }
+            .footer-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                max-width: 480px;
+                background-color: #f8f8f8;
+                border-top: 1px solid #ddd;
+            }
+            .footer-nav a {
+                flex: 1;
+                text-align: center;
+                padding: 10px;
+                text-decoration: none;
+                color: #333;
+                border-right: 1px solid #ddd;
+                transition: color 0.3s, background-color 0.3s;
+            }
+            .footer-nav a:last-child {
+                border-right: none;
+            }
+            .footer-nav a.active {
+                color: #ea9555c0;
+            }
+            .footer-nav a:hover {
+                color: #ea9555c0;
+                background-color: #e8f0fe;
+            }
+            .footer-nav a i {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 20px;
+            }
+            /* Responsive Styles */
+            @media (min-width: 768px) {
+                .container {
+                    max-width: 720px;
+                }
+                .search-bar input {
+                    margin-left: 20px;
+                }
+                .tabs a.button-like {
+                    padding: 15px;
+                    font-size: 18px;
+                }
+                .exercise-list li {
+                    padding: 20px;
+                }
+                .footer-nav a {
+                    padding: 15px;
+                }
+            }
+            @media (min-width: 1024px) {
+                .container {
+                    max-width: 960px;
+                }
+            }
+            @media (min-width: 1200px) {
+                .container {
+                    max-width: 1140px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="dropdownAvatar">
+                <img src="avatar.png" alt="Avatar" class="avatar">
+                <div class="avatarDropdown">
+                    <a href="Account.jsp">Profile</a>
+                    <a href="Logout.jsp">Log Out</a>
+                </div>
+            </div>
+            <div class="title">
+                <h1>Fitness Tracker</h1>
+            </div>
+        </header>
+        <div class="container">
+           <div class="search-bar">
+    <div class="close-btn" onclick="closeSearchBar()"><i class="fas fa-times"></i></div>
+    <input type="text" id="search-input" placeholder="Search by name, muscle, or type">
+  
+    <div class="done-btn" onclick="logExercise()"><i class="fas fa-check"></i></div>
+</div>
+
+
+            <div class="tabs">
+                <a href="Myexercise.html" class="button-like">My exercise</a>
+                <a href="Routine.html" class="button-like active">Routine</a>
+            </div>
+            <ul class="exercise-list" id="exercise-list">
+                <!-- Exercise items will be inserted here by JavaScript -->
+            </ul>
+            <div class="footer-nav">
+                <a href="#"><i class="fas fa-home"></i>Home</a>
+                <a href="#" class="active"><i class="fas fa-dumbbell"></i>Exercise</a>
+                
+                <a href="#"><i class="fas fa-fire"></i>Calories</a>
+                <a href="#"><i class="fas fa-running"></i>Run</a>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', displayRoutine);
+
+            function displayRoutine() {
+                const routine = JSON.parse(localStorage.getItem('routine')) || [];
+                const routineList = document.getElementById('exercise-list');
+                routineList.innerHTML = ''; // Clear any existing content
+
+                if (routine.length === 0) {
+                    const message = document.createElement('p');
+                    message.textContent = 'Your routine is empty.';
+                    routineList.appendChild(message);
+                } else {
+                    routine.forEach((exercise, index) => {
+                        const listItem = document.createElement('li');
+
+                        const exerciseText = document.createElement('span');
+                        exerciseText.textContent = exercise;
+                        exerciseText.addEventListener('click', () => {
+                            window.location.href = `exercise.html?name=${encodeURIComponent(exercise)}`;
+                        });
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.textContent = 'Delete';
+                        deleteBtn.className = 'delete-btn';
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteExercise(index);
+                        });
+
+                        listItem.appendChild(exerciseText);
+                        listItem.appendChild(deleteBtn);
+                        routineList.appendChild(listItem);
+                    });
+                }
+            }
+
+            function deleteExercise(index) {
+                let routine = JSON.parse(localStorage.getItem('routine')) || [];
+                routine.splice(index, 1);
+                localStorage.setItem('routine', JSON.stringify(routine));
+                displayRoutine();
+            }
+
+            async function fetchExercises() {
+                try {
+                    const searchInput = document.getElementById('search-input').value.trim();
+                    const searchCriteria = searchInput.split(',').map(criteria => criteria.trim());
+
+                    let apiUrl = 'https://api.api-ninjas.com/v1/exercises?';
+                    searchCriteria.forEach(criteria => {
+                        if (criteria.startsWith('name=')) {
+                            apiUrl += `${criteria}&`;
+                        } else if (criteria.startsWith('muscle=')) {
+                            apiUrl += `${criteria}&`;
+                        } else if (criteria.startsWith('type=')) {
+                            apiUrl += `${criteria}&`;
+                        } else {
+                            apiUrl += `name=${criteria}&`; // Default to searching by name
+                        }
+                    });
+
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'accept': 'application/json',
+                            'X-Api-Key': '8cMIiS2Uji0cOs9oPgjIiw==Av8TbTbG07DoFE5H'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`An error occurred: ${response.statusText}`);
+                    }
+
+                    const exercises = await response.json();
+                    displayExercises(exercises);
+
+                } catch (error) {
+                    console.error('Error fetching exercises:', error);
+                }
+            }
+
+            function displayExercises(exercises) {
+                const routineList = document.getElementById('exercise-list');
+                routineList.innerHTML = ''; // Clear the previous list
+
+                if (exercises.length === 0) {
+                    const message = document.createElement('p');
+                    message.textContent = 'No exercises found.';
+                    routineList.appendChild(message);
+                } else {
+                    exercises.forEach(exercise => {
+                        const listItem = document.createElement('li');
+
+                        const exerciseText = document.createElement('span');
+                        exerciseText.textContent = `${exercise.name} - ${exercise.muscle} - ${exercise.type}`;
+                        exerciseText.addEventListener('click', () => {
+                            window.location.href = `exercise.html?name=${encodeURIComponent(exercise.name)}`;
+                        });
+
+                        listItem.appendChild(exerciseText);
+                        routineList.appendChild(listItem);
+                    });
+                }
+            }
+
+            function closeSearchBar() {
+                const searchInput = document.getElementById('search-input');
+                searchInput.value = ''; // Clear the input field
+                const routineList = document.getElementById('exercise-list');
+                routineList.innerHTML = ''; // Clear the search results
+                displayRoutine(); // Display the original routine
+            }
+
+
+
+            document.getElementById('search-input').addEventListener('input', fetchExercises);
+            fetchExercises();
+
+
+        </script>
+    </body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Details</title>
+    <style>
+        body {
+            font-family:  "Garamond", Raleway, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        h1, h2 {
+            margin-top: 0;
+            font-weight: bold;
+        }
+        #exercise-details {
+            margin-top: 20px;
+        }
+        p {
+            margin: 5px 0;
+        }
+        label {
+            font-weight: bold;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color:  #ea9555c0;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #ffcc99;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Exercise Details</h1>
+        <div id="exercise-details">
+            <!-- Exercise details will be inserted here by JavaScript -->
+        </div>
+        <button class="btn" id="add-to-routine-btn">Add to Routine</button>
+        <button class="btn" id="go-back-btn">Go Back</button> <!-- "Go Back" button added -->
+    </div>
+
+    <script>
+         // Parse the exercise name from the URL query parameter
+        const params = new URLSearchParams(window.location.search);
+        const exerciseName = params.get('name');
+
+        // Fetch exercise details by name
+        async function fetchExerciseDetails() {
+            try {
+                const apiUrl = `https://api.api-ninjas.com/v1/exercises?name=${exerciseName}`;
+
+                const response = await fetch(apiUrl, {
+                    headers: {
+                        'accept': 'application/json',
+                        'X-Api-Key': '8cMIiS2gpcIkg3j/jYRWvA==i4UOuVelp44N1oTw' // Replace with your actual API key
+                    }
+                });
+                const data = await response.json();
+                displayExerciseDetails(data[0]); // Assuming the API returns an array with a single exercise object
+            } catch (error) {
+                console.error('Error fetching exercise details:', error);
+            }
+        }
+
+        function displayExerciseDetails(exercise) {
+            const exerciseDetails = document.getElementById('exercise-details');
+            exerciseDetails.innerHTML = `
+                <label>Name:</label>
+                <p id="exercise-name">${exercise.name}</p> <!-- Add this line -->
+                <label>Muscle:</label>
+                <p>${exercise.muscle}</p>
+                <label>Type:</label>
+                <p>${exercise.type}</p>
+                <label>Difficulty:</label>
+                <p>${exercise.difficulty}</p>
+                <label>Instructions:</label>
+                <p>${exercise.instructions}</p>
+            `;
+
+            // Store exercise name in local storage
+            localStorage.setItem('selectedExercise', exercise.name);
+        }
+
+        // Add to routine button event listener
+        document.getElementById('add-to-routine-btn').addEventListener('click', function() {
+            const selectedExercise = document.getElementById('exercise-name').textContent; // Assuming you have a <p> with id="exercise-name"
+            if (selectedExercise) {
+                let routine = JSON.parse(localStorage.getItem('routine')) || [];
+                routine.push(selectedExercise);
+                localStorage.setItem('routine', JSON.stringify(routine));
+                // Redirect to the routine page
+                window.location.href = 'Routine.html';
+            } else {
+                console.error('No exercise selected.');
+            }
+        });
+
+        // Fetch exercise details when the page loads
+        fetchExerciseDetails();
+
+        // Go back button event listener
+        document.getElementById('go-back-btn').addEventListener('click', function() {
+            history.back(); // Go back to the previous page
+        });
+    </script>
+</html>
